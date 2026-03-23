@@ -111,11 +111,11 @@ var QUESTIONS = [
 
 // ===== POLL QUESTIONS (edit these!) =====
 var POLL_QUESTIONS = [
-  {q:"How confident do you feel navigating Kipu after this session?",type:"scale",options:["Not confident at all","Slightly confident","Somewhat confident","Confident","Very confident"]},
-  {q:"Which area do you feel MOST comfortable with?",type:"mc",options:["Patient queue & check-in","Client charts & facesheet","Dosing & MAT workflows","Flags, forms & signatures","Scheduling & documents"]},
-  {q:"Which area do you need MORE training on?",type:"mc",options:["Patient queue & check-in","Client charts & facesheet","Dosing & MAT workflows","Flags, forms & signatures","Scheduling & documents"]},
-  {q:"What did you find most helpful about this training session?",type:"text"},
-  {q:"What would you change or improve about this training?",type:"text"}
+  {q:"How confident do you feel navigating the Kipu EMR after all of your training?",type:"scale",options:["Not confident at all","Slightly confident","Somewhat confident","Confident","Very confident"]},
+  {q:"Which areas do you feel comfortable with? Select all that apply.",type:"multi",options:["Pre-admission & intake","Client charts & facesheet","Patient queue & check-in","Dosing & MAT workflows","Scheduling & documents","Flags, forms & signatures","Kipu RCM (insurance/billing)","End-of-day tasks"]},
+  {q:"Which areas do you need additional training on? Select all that apply.",type:"multi",options:["Pre-admission & intake","Client charts & facesheet","Patient queue & check-in","Dosing & MAT workflows","Scheduling & documents","Flags, forms & signatures","Kipu RCM (insurance/billing)","End-of-day tasks"]},
+  {q:"What topics or workflows do you feel were covered well in your Kipu EMR training?",type:"text"},
+  {q:"What topics or workflows do you feel need more clarity or hands-on practice?",type:"text"}
 ];
 
 var OPT_COLORS=["#B0B8C1","#80C342","#F57E20","#7E868C"];
@@ -342,7 +342,11 @@ function HostApp(){
               h("div",{style:{marginTop:8}},item.responses.length===0?h("p",{style:{color:"rgba(255,255,255,0.4)",fontStyle:"italic"}},"No responses"):
                 item.responses.map(function(r,ri){return h("div",{key:ri,style:{background:"rgba(255,255,255,0.05)",borderRadius:10,padding:"10px 14px",marginBottom:6,fontSize:14}},'"'+r+'"');})):
               h("div",{style:{marginTop:12}},pq.options.map(function(opt,oi){
-                var cnt=item.responses.filter(function(r){return r===oi;}).length;
+                var cnt=0;
+                item.responses.forEach(function(r){
+                  if(Array.isArray(r)){if(r.indexOf(oi)>=0)cnt++;}
+                  else{if(r===oi)cnt++;}
+                });
                 var tot=Math.max(item.responses.length,1);
                 var pw=Math.round((cnt/tot)*100);
                 return h("div",{key:oi,style:{marginBottom:10}},
@@ -591,6 +595,16 @@ function PlayerApp(){
             pq.type==="text"?
               h("textarea",{placeholder:"Type your response...",value:pollAns[idx]||"",
                 onChange:function(ev){var a=pollAns.slice();a[idx]=ev.target.value;setPollAns(a);}}):
+              pq.type==="multi"?
+              pq.options.map(function(opt,oi){
+                var curArr=Array.isArray(pollAns[idx])?pollAns[idx]:[];
+                var sel=curArr.indexOf(oi)>=0;
+                return h("div",{key:oi,className:"poll-opt"+(sel?" sel":""),
+                  onClick:function(){var a=pollAns.slice();var cur=Array.isArray(a[idx])?a[idx].slice():[];if(cur.indexOf(oi)>=0){cur=cur.filter(function(x){return x!==oi;});}else{cur.push(oi);}a[idx]=cur;setPollAns(a);}},
+                  h("div",{className:"poll-dot"}),
+                  h("span",{style:{fontSize:14}},opt)
+                );
+              }):
               pq.options.map(function(opt,oi){
                 var sel=pollAns[idx]===oi;
                 return h("div",{key:oi,className:"poll-opt"+(sel?" sel":""),
